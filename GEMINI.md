@@ -2,11 +2,12 @@
 
 *   **Language:** Python
 *   **Dependency Manager:** `uv` (use `uv run pytest` for tests)
-*   **Libraries:** `httpx` (preferred over `requests`)
+*   **Libraries:** `httpx` (preferred over `requests`), `google-cloud-firestore`
 *   **Goal:** Paper Watch Bot (Arxiv) for Quantitative Finance/Statistics.
 *   **Status:** SSRN ingestion is currently disabled due to site instability/Cloudflare.
+*   **Storage:** Firebase (Firestore) used to deduplicate and store analysis results.
 *   **User Email:** `bill.speirs@gmail.com`
-*   **Environment:** Running in a sandbox; full access to all tools.
+*   **Environment:** Running in a sandbox; full access to all tools. Requires `GOOGLE_APPLICATION_CREDENTIALS` for Firestore access if not running on GCP with default identity.
 *   **Filtering Logic:**
     *   **Keep:** Statistical arbitrage, stocks, options, time-series data.
     *   **Discard:** Bonds, crypto, other asset classes.

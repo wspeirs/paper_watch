@@ -7,7 +7,7 @@
 - [x] 2. **Infrastructure Decisions:**
     - [x] **Email Service:** Evaluate options for sending emails from Google Cloud (e.g., SendGrid (Marketplace), Mailgun, or Gmail API with OAuth).
     - [x] **Compute:** Confirm Google Cloud Run Jobs (triggered by Cloud Scheduler) as the execution environment.
-    - [x] **Storage:** Determine if a database (Firestore/SQLite) is needed to track "seen" papers to avoid duplicate processing, or if a time-based window (last 24h) is sufficient.
+    - [x] **Storage:** Determine if a database (Firestore/SQLite) is needed to track "seen" papers to avoid duplicate processing, or if a time-based window (last 24h) is sufficient. *Implemented Firestore (Firebase) storage to track processed papers and their analysis results.*
 
 ## Phase 2: Local Setup & Scaffolding
 - [x] 3. **Project Initialization:**

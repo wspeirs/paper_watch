@@ -22,7 +22,7 @@ class TestReportFormatter(unittest.TestCase):
             methodology="Method",
             data="Data",
             results="Results",
-            relevance_reconfirmed=True,
+            relevance_score=8,
             reasoning="Reason"
         )
         

@@ -18,20 +18,24 @@ gcloud config set project "$PROJECT_ID"
 
 # 2. Enable APIs
 echo "Enabling APIs..."
-gcloud services enable 
-    aiplatform.googleapis.com 
-    run.googleapis.com 
-    cloudbuild.googleapis.com 
-    firestore.googleapis.com 
-    secretmanager.googleapis.com 
+gcloud services enable \
+    aiplatform.googleapis.com \
+    run.googleapis.com \
+    cloudbuild.googleapis.com \
+    firestore.googleapis.com \
+    secretmanager.googleapis.com \
     cloudscheduler.googleapis.com
+
+# Initialize Firestore in Native mode if it doesn't exist
+echo "Ensuring Firestore is initialized..."
+gcloud firestore databases create --location="$REGION" --type=firestore-native || echo "Firestore database already initialized or initialization not required."
 
 # 3. Create Service Account
 echo "Creating Service Account..."
 if gcloud iam service-accounts describe "$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" > /dev/null 2>&1; then
     echo "Service Account $SERVICE_ACCOUNT_NAME already exists."
 else
-    gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" 
+    gcloud iam service-accounts create "$SERVICE_ACCOUNT_NAME" \
         --display-name="Paper Watch Bot Service Account"
 fi
 
@@ -40,23 +44,23 @@ SERVICE_ACCOUNT_EMAIL="$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com
 # 4. Assign Roles
 echo "Assigning Roles..."
 # Vertex AI User (for Gemini)
-gcloud projects add-iam-policy-binding "$PROJECT_ID" 
-    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" 
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
     --role="roles/aiplatform.user"
 
 # Firestore User (for state management)
-gcloud projects add-iam-policy-binding "$PROJECT_ID" 
-    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" 
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
     --role="roles/datastore.user"
 
 # Secret Manager Accessor (for API keys)
-gcloud projects add-iam-policy-binding "$PROJECT_ID" 
-    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" 
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
     --role="roles/secretmanager.secretAccessor"
 
 # Cloud Run Invoker (if needed to invoke itself, though usually Scheduler does this)
-gcloud projects add-iam-policy-binding "$PROJECT_ID" 
-    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" 
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
     --role="roles/run.invoker"
 
 echo "Setup complete!"

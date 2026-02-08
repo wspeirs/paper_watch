@@ -18,10 +18,10 @@ class TestGeminiClient(unittest.TestCase):
         self.client = GeminiClient(api_key="dummy_key")
         
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "keep": True,
-            "reasoning": "This paper is about statistical arbitrage in stocks."
-        })
+        mock_response.parsed = FilterResult(
+            relevance_score=5,
+            reasoning="This paper is about statistical arbitrage in stocks."
+        )
         mock_client.models.generate_content.return_value = mock_response
 
         result = self.client.screen_abstract(
@@ -29,7 +29,7 @@ class TestGeminiClient(unittest.TestCase):
             "This paper explores statistical arbitrage strategies for equity markets."
         )
 
-        self.assertTrue(result.keep)
+        self.assertGreaterEqual(result.relevance_score, 3)
         self.assertIn("statistical arbitrage", result.reasoning.lower())
 
     @patch('google.genai.Client')
@@ -40,10 +40,10 @@ class TestGeminiClient(unittest.TestCase):
         self.client = GeminiClient(api_key="dummy_key")
 
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "keep": False,
-            "reasoning": "This paper is about crypto bonds, which is out of scope."
-        })
+        mock_response.parsed = FilterResult(
+            relevance_score=1,
+            reasoning="This paper is about crypto bonds, which is out of scope."
+        )
         mock_client.models.generate_content.return_value = mock_response
 
         result = self.client.screen_abstract(
@@ -51,7 +51,7 @@ class TestGeminiClient(unittest.TestCase):
             "This paper discusses the emergence of bonds backed by cryptocurrency."
         )
 
-        self.assertFalse(result.keep)
+        self.assertLess(result.relevance_score, 3)
         self.assertIn("crypto", result.reasoning.lower())
 
     @patch('google.genai.Client')
@@ -65,7 +65,7 @@ class TestGeminiClient(unittest.TestCase):
 
         result = self.client.screen_abstract("Any Title", "Any Abstract")
 
-        self.assertFalse(result.keep)
+        self.assertEqual(result.relevance_score, 1)
         self.assertIn("Error", result.reasoning)
 
     @patch('google.genai.Client')
@@ -75,21 +75,22 @@ class TestGeminiClient(unittest.TestCase):
         mock_client_class.return_value = mock_client
         self.client = GeminiClient(api_key="dummy_key")
 
+        from paper_watch.intelligence.llm import DeepAnalysisResult
         mock_response = MagicMock()
-        mock_response.text = json.dumps({
-            "summary": "Core idea",
-            "methodology": "Stats",
-            "data": "Stocks",
-            "results": "Win",
-            "relevance_reconfirmed": True,
-            "reasoning": "Good paper"
-        })
+        mock_response.parsed = DeepAnalysisResult(
+            summary="Core idea",
+            methodology="Stats",
+            data="Stocks",
+            results="Win",
+            relevance_score=8,
+            reasoning="Good paper"
+        )
         mock_client.models.generate_content.return_value = mock_response
 
         result = self.client.analyze_full_paper("Title", "Full Text")
 
         self.assertEqual(result.summary, "Core idea")
-        self.assertTrue(result.relevance_reconfirmed)
+        self.assertGreaterEqual(result.relevance_score, 6)
 
 if __name__ == '__main__':
     unittest.main()
