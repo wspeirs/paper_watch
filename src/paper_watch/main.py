@@ -3,6 +3,8 @@ import os
 import tempfile
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
+
 from .ingestion import ArxivClient #, SSRNClient
 from .intelligence import GeminiClient
 from .reporting import ReportFormatter, EmailClient
@@ -19,6 +21,21 @@ KEEP_THRESHOLD = 3
 DEEP_ANALYSIS_THRESHOLD = 6
 
 def main():
+    # Load environment variables from .env file if it exists
+    load_dotenv()
+    
+    # DEBUG: Check if env vars are loaded
+    api_key = os.environ.get("GOOGLE_API_KEY")
+    if api_key:
+        logger.info(f"DEBUG: GOOGLE_API_KEY loaded: {api_key[:5]}...{api_key[-5:]}")
+    else:
+        logger.error("DEBUG: GOOGLE_API_KEY is NOT set")
+
+    recipient = os.environ.get("RECIPIENT_EMAIL")
+
+    if recipient is None:
+        raise ValueError("No recipient specified")
+    
     # 1. Initialize clients
     arxiv_client = ArxivClient(max_results=10)
     # ssrn_client = SSRNClient()
@@ -92,7 +109,6 @@ def main():
     report_html = ReportFormatter.format_html(relevant_papers_with_analysis, discarded_papers)
     
     # 5. Send Email
-    recipient = os.environ.get("RECIPIENT_EMAIL", "bill.speirs@gmail.com")
     subject = f"Paper Watch Digest - {datetime.now().strftime('%Y-%m-%d')}"
     
     logger.info(f"Sending email to {recipient}...")

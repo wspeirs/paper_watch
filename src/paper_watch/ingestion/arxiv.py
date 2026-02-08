@@ -11,7 +11,7 @@ from ..models import Paper
 logger = logging.getLogger(__name__)
 
 class ArxivClient:
-    BASE_URL = "http://export.arxiv.org/api/query?"
+    BASE_URL = "https://export.arxiv.org/api/query?"
 
     def __init__(self, categories: List[str] = ["q-fin.*"], max_results: int = 50):
         self.categories = categories

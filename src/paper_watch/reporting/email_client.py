@@ -1,61 +1,77 @@
 import logging
 import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from typing import Optional
+
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 logger = logging.getLogger(__name__)
 
 class EmailClient:
+    """Sends emails using the SendGrid Python SDK."""
+    
     def __init__(self):
-        self.smtp_host = os.environ.get("SMTP_HOST")
-        self.smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-        self.smtp_user = os.environ.get("SMTP_USER")
-        self.smtp_password = os.environ.get("SMTP_PASSWORD")
-        self.from_email = os.environ.get("FROM_EMAIL", "paperwatch@example.com")
+        self.sendgrid_api_key = os.environ.get("SENDGRID_KEY")
+        self.from_email = os.environ.get("FROM_EMAIL")
+
+        if not self.sendgrid_api_key:
+            raise ValueError("SENDGRID_KEY environment variable is not set")
+        if not self.from_email:
+            raise ValueError("FROM_EMAIL environment variable is not set")
 
     def send_email(self, to_email: str, subject: str, body_markdown: str, body_html: Optional[str] = None) -> bool:
-        """Sends an email using SMTP."""
-        if not self.smtp_host:
-            logger.warning("SMTP_HOST not set. Skipping email delivery. Printing to log.")
+        """Sends an email using SendGrid SDK."""
+        if not self.sendgrid_api_key:
+            logger.warning("SENDGRID_SECRET not set. Skipping email delivery. Printing to log.")
             logger.info(f"EMAIL TO: {to_email}")
             logger.info(f"SUBJECT: {subject}")
             logger.info(f"BODY:\n{body_markdown}")
             return True
 
         try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = self.from_email
-            msg["To"] = to_email
+            message = Mail(
+                from_email=self.from_email,
+                to_emails=to_email,
+                subject=subject,
+                plain_text_content=body_markdown,
+                html_content=body_html if body_html else body_markdown
+            )
 
-            part1 = MIMEText(body_markdown, "plain")
-            msg.attach(part1)
-
-            if body_html:
-                part2 = MIMEText(body_html, "html")
-                msg.attach(part2)
-
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
-                server.starttls()
-                if self.smtp_user and self.smtp_password:
-                    server.login(self.smtp_user, self.smtp_password)
-                server.send_message(msg)
+            # Using the SECRET as the API Key for the client
+            sg = SendGridAPIClient(self.sendgrid_api_key)
+            response = sg.send(message)
             
-            logger.info(f"Email sent successfully to {to_email}")
-            return True
+            if 200 <= response.status_code < 300:
+                logger.info(f"Email sent successfully to {to_email}")
+                return True
+            else:
+                logger.error(f"Failed to send email. Status Code: {response.status_code}, Body: {response.body}")
+                return False
+                
         except Exception as e:
-            logger.error(f"Failed to send email: {e}")
+            logger.error(f"Failed to send email via SendGrid: {e}")
             return False
 
-# Placeholder for SendGrid if decided later
-class SendGridClient(EmailClient):
-    def __init__(self, api_key: Optional[str] = None):
-        super().__init__()
-        self.api_key = api_key or os.environ.get("SENDGRID_API_KEY")
-
-    def send_email(self, to_email: str, subject: str, body_markdown: str, body_html: Optional[str] = None) -> bool:
-        # Implementation would go here using sendgrid library
-        logger.info(f"SendGrid send_email called for {to_email}")
-        return super().send_email(to_email, subject, body_markdown, body_html)
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+    logging.basicConfig(level=logging.INFO)
+    load_dotenv()
+    
+    client = EmailClient()
+    test_to = os.environ.get("RECIPIENT_EMAIL", "bill.speirs@gmail.com")
+    
+    print(f"Testing SendGrid with:")
+    print(f"  API Key: {client.sendgrid_api_key[:5]}...{client.sendgrid_api_key[-5:] if client.sendgrid_api_key else 'None'}")
+    print(f"  From: {client.from_email}")
+    print(f"  To: {test_to}")
+    
+    success = client.send_email(
+        to_email=test_to,
+        subject="SendGrid Test Connection",
+        body_markdown="This is a test email from the Paper Watch Bot."
+    )
+    
+    if success:
+        print("SUCCESS: Test email sent.")
+    else:
+        print("FAILURE: Check logs for details.")
