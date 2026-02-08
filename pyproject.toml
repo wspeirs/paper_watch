@@ -1,0 +1,34 @@
+[project]
+name = "paper-watch"
+version = "0.1.0"
+description = "Paper Watch Bot for Quantitative Finance/Statistics"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "feedparser>=6.0.12",
+    "google-genai>=1.62.0",
+    "google-generativeai>=0.8.6",
+    "pymupdf>=1.26.7",
+    "httpx>=0.28.1",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "C4", "UP"]
+ignore = []
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[dev-dependencies]
+ruff = ">=0.15.0"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.15.0",
+]

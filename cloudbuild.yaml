@@ -1,0 +1,26 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/paper-watch-bot', '.']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/paper-watch-bot']
+
+  # Deploy to Cloud Run Job
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'jobs'
+      - 'deploy'
+      - 'paper-watch-bot'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/paper-watch-bot'
+      - '--region'
+      - 'us-central1'
+      - '--service-account'
+      - 'paper-watch-bot@$PROJECT_ID.iam.gserviceaccount.com'
+
+images:
+  - 'gcr.io/$PROJECT_ID/paper-watch-bot'
